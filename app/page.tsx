@@ -94,6 +94,7 @@ export default function ReporterPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState('');
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [supabaseAudioUrl, setSupabaseAudioUrl] = useState<string | null>(null);
   const [isTranscriptionComplete, setIsTranscriptionComplete] = useState(false);
   const [blackScreen, setBlackScreen] = useState(false); // ← écran noir
 
@@ -197,6 +198,7 @@ export default function ReporterPage() {
       fullRec.onstop = () => {
         const blob = new Blob(fullChunksRef.current, { type: mimeType });
         setAudioBlob(blob); setAudioUrl(URL.createObjectURL(blob));
+        uploadAudio(blob, sessionIdRef.current).then(url => { if (url) setSupabaseAudioUrl(url); });
       };
       fullRec.start(1000);
       fullRecorderRef.current = fullRec;
@@ -236,8 +238,7 @@ export default function ReporterPage() {
       if (!res.ok) throw new Error(data.error);
       setReport(data.report);
       setStatusMsg('Sauvegarde…');
-      let savedAudioUrl: string | null = null;
-      if (audioBlob) savedAudioUrl = await uploadAudio(audioBlob, sessionIdRef.current);
+      const savedAudioUrl = supabaseAudioUrl; // déjà uploadé à l'arrêt
       const id = await saveSession({
         id: sessionIdRef.current, titre: meta.titre || 'Sans titre',
         participants: meta.participants, date_seance: meta.date,
@@ -256,6 +257,7 @@ export default function ReporterPage() {
     setPhase('setup'); setTranscript(''); setReport(null);
     setAudioUrl(null); setAudioBlob(null); setError(null);
     setRecordingTime(0); setSegments([]); setSavedId(null);
+    setSupabaseAudioUrl(null);
     setIsTranscriptionComplete(false); setBlackScreen(false);
     releaseWakeLock();
   };
@@ -305,11 +307,12 @@ export default function ReporterPage() {
             <div style={{ fontSize: 10, color: C.textMuted, fontFamily: 'monospace', letterSpacing: '0.07em' }}>WHISPER · CLAUDE · SUPABASE</div>
           </div>
         </div>
-        {phase !== 'setup' && (
-          <button onClick={reset} style={{ background: 'none', border: `1px solid ${C.border}`, color: C.textMuted, borderRadius: 6, padding: '4px 12px', fontSize: 12, cursor: 'pointer' }}>
-            Nouveau
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href='/sessions' style={{ background: 'none', border: '1px solid #2e2b24', color: '#9a9080', borderRadius: 6, padding: '4px 10px', fontSize: 14, textDecoration: 'none' }}>📋</a>
+          {phase !== 'setup' && (
+            <button onClick={reset} style={{ background: 'none', border: '1px solid #2e2b24', color: '#9a9080', borderRadius: 6, padding: '4px 12px', fontSize: 12, cursor: 'pointer' }}>Nouveau</button>
+          )}
+        </div>
       </header>
 
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '24px 16px 80px', animation: 'slide .35s ease' }}>
