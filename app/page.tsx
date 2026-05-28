@@ -3,8 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { uploadAudio, saveSession } from '@/lib/supabase';
 import type { SessionMetadata, Report } from '@/lib/types';
-
-const SEGMENT_MS = 4 * 60 * 1000;
+const SEGMENT_MS = 60 * 1000;
 
 const C = {
   bg: '#0f0e0c', surface: '#1a1815',
